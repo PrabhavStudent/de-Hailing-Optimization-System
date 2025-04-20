@@ -1,35 +1,53 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import React, { useState } from 'react';
+import axios from 'axios';
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [userLocation, setUserLocation] = useState("");
+  const [driverLocation, setDriverLocation] = useState("");
+  const [rideAssignment, setRideAssignment] = useState(null);
+
+  const handleSubmit = async () => {
+    try {
+      // Change this URL to your backend's URL (with the correct codespace public URL)
+      const response = await axios.post('https://<your-codespace-name>-5000.app.github.dev/api/ride/optimal-assignment', {
+        userLocation,
+        driverLocation
+      });
+      setRideAssignment(response.data);
+    } catch (error) {
+      console.error('Error connecting to backend:', error);
+    }
+  };
 
   return (
-    <>
+    <div>
+      <h1>Ride Matching</h1>
       <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
+        <label>User Location: </label>
+        <input 
+          type="text" 
+          value={userLocation} 
+          onChange={(e) => setUserLocation(e.target.value)} 
+        />
       </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
+      <div>
+        <label>Driver Location: </label>
+        <input 
+          type="text" 
+          value={driverLocation} 
+          onChange={(e) => setDriverLocation(e.target.value)} 
+        />
       </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+      <button onClick={handleSubmit}>Find Optimal Ride</button>
+
+      {rideAssignment && (
+        <div>
+          <h2>Optimal Ride Assignment:</h2>
+          <pre>{JSON.stringify(rideAssignment, null, 2)}</pre>
+        </div>
+      )}
+    </div>
+  );
 }
 
-export default App
+export default App;
