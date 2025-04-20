@@ -1,9 +1,10 @@
+// backend/routes/ride.js
+
 const express = require('express');
-const { requestRide, availableDrivers, matchRides } = require('../controllers/rideController');
+const { optimalRideAssignment } = require('../controllers/rideController');
+
 const router = express.Router();
 
-router.post('/request', requestRide);
-router.get('/drivers', availableDrivers);
-router.post('/match', matchRides);
+router.post('/optimal-assignment', optimalRideAssignment);
 
 module.exports = router;
