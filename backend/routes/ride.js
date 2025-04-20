@@ -1,7 +1,7 @@
 // backend/routes/ride.js
 
 const express = require('express');
-const { optimalRideAssignment } = require('../controllers/rideController');
+const { optimalRideAssignment } = require('../rideController');
 
 const router = express.Router();
 
