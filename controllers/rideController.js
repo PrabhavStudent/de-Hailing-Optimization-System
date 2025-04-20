@@ -1,30 +1,57 @@
-const { matchUsersToDrivers } = require('../utils/matching');
+// backend/controllers/rideController.js
 
-// Mock databases (in-memory)
-let users = [];
-let drivers = [];
-
-// Request a new ride
-const requestRide = (req, res) => {
-    const { id, location } = req.body;
-    users.push({ id, location });
-    res.status(200).json({ message: 'Ride requested', user: { id, location } });
-};
-
-// Get available drivers
-const availableDrivers = (req, res) => {
-    res.status(200).json({ drivers });
-};
-
-// Match rides (with pooling logic)
-const matchRides = (req, res) => {
-    const matches = matchUsersToDrivers(users, drivers);
-    res.status(200).json({ matches });
-};
-
-// Add a few sample drivers for testing
-drivers.push({ id: 'D1', location: { lat: 28.61, lng: 77.20 } });
-drivers.push({ id: 'D2', location: { lat: 28.62, lng: 77.21 } });
-drivers.push({ id: 'D3', location: { lat: 28.63, lng: 77.18 } });
-
-module.exports = { requestRide, availableDrivers, matchRides };
+const optimalRideAssignment = (req, res) => {
+    const users = req.body.users;    // Users will be an array: [{lat, lng}]
+    const drivers = req.body.drivers; // Drivers will be an array: [{lat, lng}]
+    
+    const n = users.length;
+    const m = drivers.length;
+  
+    if (n > m) {
+      return res.status(400).json({ message: "More users than drivers. Cannot assign." });
+    }
+  
+    // Precompute distance (cost) between each user and driver
+    const cost = Array.from({ length: n }, () => Array(m).fill(0));
+    
+    for (let i = 0; i < n; i++) {
+      for (let j = 0; j < m; j++) {
+        const dx = users[i].lat - drivers[j].lat;
+        const dy = users[i].lng - drivers[j].lng;
+        cost[i][j] = Math.sqrt(dx * dx + dy * dy); // Euclidean distance
+      }
+    }
+  
+    const size = 1 << m;  // Total subsets of drivers
+    const dp = Array(size).fill(Infinity);
+    dp[0] = 0;
+  
+    for (let mask = 0; mask < size; mask++) {
+      const assignedUsers = countBits(mask);
+      if (assignedUsers >= n) continue;
+  
+      for (let j = 0; j < m; j++) {
+        if ((mask & (1 << j)) === 0) {  // If driver j not assigned
+          const newMask = mask | (1 << j);
+          dp[newMask] = Math.min(dp[newMask], dp[mask] + cost[assignedUsers][j]);
+        }
+      }
+    }
+  
+    const minCost = Math.min(...dp.slice((1 << n) - 1));  // Minimum cost after all users assigned
+  
+    res.status(200).json({ minCost });
+  };
+  
+  // Helper to count bits (how many users assigned)
+  function countBits(mask) {
+    let count = 0;
+    while (mask > 0) {
+      count += mask & 1;
+      mask >>= 1;
+    }
+    return count;
+  }
+  
+  module.exports = { optimalRideAssignment };
+  
